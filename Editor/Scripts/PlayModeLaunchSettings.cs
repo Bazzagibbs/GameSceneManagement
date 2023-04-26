@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace BazzaGibbs.GameSceneManager {
      
-    [CreateAssetMenu(menuName = "Game Scene Manager/Play Mode Launch Settings", fileName = "PlayModeLaunchSettings")]
+    [CreateAssetMenu(menuName = "Game Scene Manager/Play Mode Launch Settings", fileName = "PlayModeLaunchSettings", order = 22)]
     public class PlayModeLaunchSettings : ScriptableObject {
         public SceneAsset playModeScene;
 

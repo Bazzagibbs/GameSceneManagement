@@ -9,5 +9,8 @@
     "url": "https://bazzagibbs.com"
   },
   "type": "library",
-  "hideInEditor": false
+  "hideInEditor": false,
+  "dependencies": {
+    "com.unity.addressables": "1.21.10"
+  }
 }
