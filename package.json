@@ -12,5 +12,8 @@
   "hideInEditor": false,
   "dependencies": {
     "com.unity.addressables": "1.21.10"
-  }
+  },
+  "keywords": [
+    "Game Architecture"
+  ]
 }

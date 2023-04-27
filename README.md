@@ -6,32 +6,40 @@ Please note: this package is a WORK IN PROGRESS, I am making it for my own proje
 
 Most of this README's contents will eventually be moved to a documentation site.
 
+## Contents
+
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Features](#features)
+
+
 ## Dependencies
 These should be handled automatically by the Unity Package Manager.
 - `com.unity.addressables`: Because the Scene assets are in the UnityEditor namespace, references to them can't be serialized easily. To avoid dealing with this, the [Unity Addressables](https://docs.unity3d.com/Packages/com.unity.addressables@latest/index.html) system is being used.
 
+## Installation
+
+### Option A: Scoped Registry
+
+All my public/open source packages are hosted on [my registry](https://registry.bazzagibbs.com).
+
+1. Install a Scoped Registry: `Project Settings > Package Manager > Scoped Registries`
+```
+Name:       BazzaGibbs
+URL:        https://registry.bazzagibbs.com
+Scope(s):   com.bazzagibbs
+```
+2. In the Package Manager, select "Add package by name", `com.bazzagibbs.gamescenemanager`
+
+### Option B: Git URL
+
+Adding packages by Git URL has the downside of not properly displaying when there is a package update available.
+
+1. In the Package Manager, select "Add package from git URL", `https://github.com/Bazzagibbs/GameSceneManager.git`
+
 
 ## Quick Start
-
-### Installation
-
-#### Option A: Scoped Registry
-I host all my public packages on my scoped registry. You can access it by adding an entry to "Project Settings > Package Manager > Scoped Registries"
-```
-Name:     BazzaGibbs
-URL:      https://registry.bazzagibbs.com
-Scope(s): com.bazzagibbs
-```
-Now my packages can be added in the Package manager using "Add > Add package by name"
-  - Option A i: [Game Architecture Suite](https://github.com/Bazzas-Personal-Stuff/GameArchitectureSuite) - `com.bazzagibbs.gamearch`
-    - Includes this package, as well as other useful packages that may be helpful for game architecture.
-  - Option A ii: Standalone - `com.bazzagibbs.gamescenemanager`
-    - If you only care about this package.
-  
-#### Option B: Git URL
-This option has the downside of not showing when a new package version is available, even when pressing the "refresh" button in the package manager.
-1. In Unity's Package Manager, select "Add > Add package from git URL"
-2. Enter the following URL: `https://github.com/Bazzas-Personal-Stuff/GameSceneManager.git`
 
 ### Recommended File Structure
 
