@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -22,6 +21,7 @@ namespace BazzaGibbs.GameSceneManager
         }
 
         [SerializeField] private GameLevel m_StartLevel;
+        [SerializeField] private List<GameCoreScene> m_StartCoreScenes = new();
 
         // One and only one level can be loaded at a time.
         [NonSerialized] public GameLevel currentLevel;
@@ -37,6 +37,10 @@ namespace BazzaGibbs.GameSceneManager
                 Debug.LogError("[GameSceneManager] Multiple GameSceneManagers. Please make sure only one exists.", this);
                 DestroyImmediate(gameObject);
                 return;
+            }
+
+            foreach (GameCoreScene coreScene in m_StartCoreScenes) {
+                LoadCoreScene(coreScene);
             }
 
             if (m_StartLevel != null) {
@@ -78,6 +82,15 @@ namespace BazzaGibbs.GameSceneManager
             if(Instance.auxiliaryScenes.TryGetValue(auxScene, out GameAuxiliaryScene loadedAuxScene)) {
                 loadedAuxScene.Unload();
                 Instance.auxiliaryScenes.Remove(loadedAuxScene);
+            }
+        }
+
+        public static void ToggleAuxScene(GameAuxiliaryScene auxScene) {
+            if (Instance.auxiliaryScenes.TryGetValue(auxScene, out GameAuxiliaryScene loadedAuxScene)) {
+                UnloadAuxScene(loadedAuxScene);
+            }
+            else {
+                LoadAuxScene(auxScene);
             }
         }
 
