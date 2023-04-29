@@ -39,6 +39,10 @@ namespace BazzaGibbs.GameSceneManager
                 return;
             }
 
+            if (s_Instance == null) {
+                s_Instance = this;
+            }
+
             foreach (GameCoreScene coreScene in m_StartCoreScenes) {
                 LoadCoreScene(coreScene);
             }
