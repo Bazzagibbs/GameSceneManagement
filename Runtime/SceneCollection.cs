@@ -23,16 +23,16 @@ namespace BazzaGibbs.GameSceneManager
         }
 
 
-        private async void LoadInternal() {
+        private void LoadInternal() {
             for (int i = 0; i < sceneRefs.Count; i++) {
                 AssetReference assetRef = sceneRefs[i];
-                AsyncOperationHandle handle = assetRef.LoadSceneAsync(LoadSceneMode.Additive);
-                // handle.Completed += OnHandleCompleted;
-                await handle.Task;
+
+                
+                SceneInstance instance = assetRef.LoadSceneAsync(LoadSceneMode.Additive).WaitForCompletion();
 
                 // Set the first scene as the active scene if we're loading a Level
                 if (i == 0 && setSelfActive) {
-                    SceneManager.SetActiveScene(((SceneInstance)handle.Result).Scene);
+                    SceneManager.SetActiveScene(instance.Scene);
                 }
             }
 
@@ -46,7 +46,7 @@ namespace BazzaGibbs.GameSceneManager
         public virtual void Unload() {
             
             foreach (AssetReference assetRef in sceneRefs) {
-                assetRef.UnLoadScene();
+                assetRef.UnLoadScene().WaitForCompletion();
             }
         }
     }
