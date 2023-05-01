@@ -28,25 +28,27 @@ namespace BazzaGibbs.GameSceneManager
                 AssetReference assetRef = sceneRefs[i];
 
                 
-                SceneInstance instance = assetRef.LoadSceneAsync(LoadSceneMode.Additive).WaitForCompletion();
-
+                AsyncOperationHandle<SceneInstance> task = assetRef.LoadSceneAsync(LoadSceneMode.Additive);
+                
                 // Set the first scene as the active scene if we're loading a Level
                 if (i == 0 && setSelfActive) {
-                    SceneManager.SetActiveScene(instance.Scene);
+                    task.Completed += OnHandleCompleted;
                 }
+
+                task.WaitForCompletion();
             }
 
             OnSceneCollectionLoaded?.Invoke(this);
         }
 
-        // private void OnHandleCompleted(AsyncOperationHandle obj) {
-        //     // Interlocked.Increment(ref m_ScenesLoaded);
-        // }
+        private void OnHandleCompleted(AsyncOperationHandle<SceneInstance> obj) {
+            SceneManager.SetActiveScene(obj.Result.Scene);
+        }
 
         public virtual void Unload() {
             
             foreach (AssetReference assetRef in sceneRefs) {
-                assetRef.UnLoadScene().WaitForCompletion();
+                assetRef.UnLoadScene();
             }
         }
     }
