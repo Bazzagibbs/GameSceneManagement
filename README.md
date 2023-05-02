@@ -1,4 +1,4 @@
-# Game Scene Manager
+# Game Scene Management
 
 Tool for defining collections of scenes to be loaded together, as well as some scene management-related utilities.
 
@@ -30,13 +30,13 @@ Name:       BazzaGibbs
 URL:        https://registry.bazzagibbs.com
 Scope(s):   com.bazzagibbs
 ```
-2. In the Package Manager, select "Add package by name", `com.bazzagibbs.gamescenemanager`
+2. In the Package Manager, select "Add package by name", `com.bazzagibbs.gamescenemanagement`
 
 ### Option B: Git URL
 
 Adding packages by Git URL has the downside of not properly displaying when there is a package update available.
 
-1. In the Package Manager, select "Add package from git URL", `https://github.com/Bazzagibbs/GameSceneManager.git`
+1. In the Package Manager, select "Add package from git URL", `https://github.com/Bazzagibbs/GameSceneManagement.git`
 
 
 ## Quick Start
@@ -124,7 +124,7 @@ At this point, if you run the game from the "\_EntryPoint" scene, the Main Menu 
 Changing scenes from C# scripts can be simple, see the following snippet:
 ```csharp
 using UnityEngine;
-using BazzaGibbs.GameSceneManager;
+using BazzaGibbs.GameSceneManagement;
 
 // A trigger zone to load the next level in a linear game.
 public class MyLevelLoadTrigger : MonoBehaviour {
@@ -182,7 +182,7 @@ That's it, the system should be ready to use! The game should launch into the Ma
 ### Editor
 
 - __Play Mode Launch Helper__ (ScriptableObject): Launch Play Mode from a different scene to those currently edited.
-  - `Create > Game Scene Manager > Play Mode Launch Settings`
+  - `Create > Game Scene Management > Play Mode Launch Settings`
   - If a Scene asset is provided, it will be launched when Play mode is entered. and the specified scene will be launched. These closed scenes will be reopened upon exiting Play Mode.
   - Otherwise, the currently open scenes will be launched as normal.
 

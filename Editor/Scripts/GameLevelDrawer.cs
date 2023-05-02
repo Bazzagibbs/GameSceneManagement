@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace BazzaGibbs.GameSceneManager
+namespace BazzaGibbs.GameSceneManagement
 {
     // [CustomEditor(typeof(GameLevel))]
     public class GameLevelDrawer : Editor {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace BazzaGibbs.GameSceneManager
+namespace BazzaGibbs.GameSceneManagement
 {
     public class GameSceneManager : MonoBehaviour {
         // Only use for checking singleton
@@ -54,7 +54,6 @@ namespace BazzaGibbs.GameSceneManager
 
         public static void SetLevel(GameLevel level) {
             // Set current active scene to entry point.
-            Debug.Log($"Active: {SceneManager.GetActiveScene().name}, GSM: {Instance.gameObject.scene.name}");
             if (SceneManager.GetActiveScene() != Instance.gameObject.scene) {
                 SceneManager.SetActiveScene(Instance.gameObject.scene);
             }

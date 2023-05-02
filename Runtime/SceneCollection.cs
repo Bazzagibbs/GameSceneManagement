@@ -6,7 +6,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 
-namespace BazzaGibbs.GameSceneManager
+namespace BazzaGibbs.GameSceneManagement
 {
     public class SceneCollection : ScriptableObject {
         // public AssetReference loadingScreenSceneRef;
@@ -26,7 +26,6 @@ namespace BazzaGibbs.GameSceneManager
         private void LoadInternal() {
             for (int i = 0; i < sceneRefs.Count; i++) {
                 AssetReference assetRef = sceneRefs[i];
-
                 
                 AsyncOperationHandle<SceneInstance> task = assetRef.LoadSceneAsync(LoadSceneMode.Additive);
                 
@@ -42,6 +41,9 @@ namespace BazzaGibbs.GameSceneManager
         }
 
         private void OnHandleCompleted(AsyncOperationHandle<SceneInstance> obj) {
+            Scene resultScene = obj.Result.Scene;
+            if (SceneManager.GetActiveScene() == resultScene) return;
+            
             SceneManager.SetActiveScene(obj.Result.Scene);
         }
 

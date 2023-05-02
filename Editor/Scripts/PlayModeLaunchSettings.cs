@@ -4,15 +4,15 @@ using UnityEditor.SceneManagement;
 #endif
 using UnityEngine;
 
-namespace BazzaGibbs.GameSceneManager {
+namespace BazzaGibbs.GameSceneManagement {
      
-    [CreateAssetMenu(menuName = "Game Scene Manager/Play Mode Launch Settings", fileName = "PlayModeLaunchSettings", order = 22)]
+    [CreateAssetMenu(menuName = "Game Scene Management/Play Mode Launch Settings", fileName = "PlayModeLaunchSettings", order = 22)]
     public class PlayModeLaunchSettings : ScriptableObject {
         public bool enabled = true;
 #if UNITY_EDITOR
         public SceneAsset playModeScene;
 
-        [MenuItem("Tools/Game Scene Manager/Play Mode Launch Settings")]
+        [MenuItem("Tools/Game Scene Management/Play Mode Launch Settings")]
         public static void FindPlayModeLaunchSettings() {
             
             string[] results = AssetDatabase.FindAssets("t:PlayModeLaunchSettings");

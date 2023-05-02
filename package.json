@@ -1,8 +1,8 @@
 {
-  "name": "com.bazzagibbs.gamescenemanager",
+  "name": "com.bazzagibbs.gamescenemanagement",
   "version": "0.0.1",
   "description": "Tool for defining collections of scenes to be loaded together, as well as some scene management-related utilities.",
-  "displayName": "Game Scene Manager",
+  "displayName": "Game Scene Management",
   "author": {
     "name": "BazzaGibbs",
     "email": "bazzagibbsdev@gmail.com",

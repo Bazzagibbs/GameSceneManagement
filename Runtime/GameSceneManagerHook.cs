@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 
-namespace BazzaGibbs.GameSceneManager {
+namespace BazzaGibbs.GameSceneManagement {
     
     /// <summary>
     /// Convenience ScriptableObject to allow easy UnityEvent hooks, such as using a UI button to load a scene.
     /// </summary>
-    [CreateAssetMenu(menuName = "Game Scene Manager/Game Scene Manager Hook", fileName = "Game Scene Manager Hook", order = 100)]
+    [CreateAssetMenu(menuName = "Game Scene Management/Game Scene Manager Hook", fileName = "Game Scene Manager Hook", order = 100)]
     public class GameSceneManagerHook : ScriptableObject{
         public static void SetLevel(GameLevel level) {
             GameSceneManager.SetLevel(level);
