@@ -10,8 +10,7 @@ using UnityEngine.SceneManagement;
 namespace BazzaGibbs.GameSceneManagement
 {
     public class SceneCollection : ScriptableObject {
-        [NonSerialized] public int registeredSceneRefIndex = -1; // Assigned by GSM at runtime
-        
+        public string uniqueNameOverride = "";
         public List<AssetReference> sceneRefs;
         public UnityEvent<LoadedSceneCollection> OnSceneCollectionLoaded;
         
@@ -47,7 +46,14 @@ namespace BazzaGibbs.GameSceneManagement
 
             await Task.WhenAll(handles);
         }
-        
+
+
+        public bool EqualSceneCollection(SceneCollection other) {
+            string thisIdentifier = uniqueNameOverride == "" ? name : uniqueNameOverride;
+            string otherIdentifier = other.uniqueNameOverride == "" ? other.name : other.uniqueNameOverride;
+
+            return thisIdentifier == otherIdentifier;
+        }
     }
 
     public class LoadedSceneCollection {
