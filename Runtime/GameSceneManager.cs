@@ -10,7 +10,6 @@ using UnityEngine.Serialization;
 namespace BazzaGibbs.GameSceneManagement
 {
     public class GameSceneManager : MonoBehaviour {
-        // Only use for checking singleton
         private static GameSceneManager s_Instance;
 
         public static GameSceneManager Instance {
@@ -24,7 +23,13 @@ namespace BazzaGibbs.GameSceneManagement
             }
         }
 
-        public GameLevel offlineLevel;
+        public static GameLevel offlineLevel =>
+            Instance.registeredLevels.Length > 0
+                ? Instance.registeredLevels[0]
+                : null;
+
+        [Tooltip("First entry will be used as the offline scene")]
+        public GameLevel[] registeredLevels;
         [SerializeField] private List<GameCoreScene> m_StartCoreScenes = new();
 
         // One and only one level can be loaded at a time.
@@ -51,11 +56,8 @@ namespace BazzaGibbs.GameSceneManagement
                 LoadCoreSceneAsync(coreScene);
             }
 
-            if (offlineLevel != null) {
-                // Task t = SetLevelAsync(offlineLevel);
-                // t.Start();
-                // t.Wait();
-                _ = SetLevelAsync(offlineLevel);
+            if (registeredLevels.Length > 0 && registeredLevels[0] != null) {
+                _ = SetLevelAsync(registeredLevels[0]);
             }
         }
 
