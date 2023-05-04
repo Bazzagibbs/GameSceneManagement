@@ -53,6 +53,10 @@ namespace BazzaGibbs.GameSceneManagement
                 LoadCoreSceneAsync(coreScene);
             }
 
+            for(int i = 0; i < registeredLevels.Length; i++) {
+                registeredLevels[i].registeredSceneRefIndex = i;
+            }
+
             if (registeredLevels.Length > 0 && registeredLevels[0] != null) {
                 _ = SetLevelAsync(registeredLevels[0]);
             }

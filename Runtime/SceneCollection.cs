@@ -1,16 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 
 namespace BazzaGibbs.GameSceneManagement
 {
     public class SceneCollection : ScriptableObject {
-        // public AssetReference loadingScreenSceneRef;
+        [NonSerialized] public int registeredSceneRefIndex = -1; // Assigned by GSM at runtime
+        
         public List<AssetReference> sceneRefs;
         public UnityEvent<LoadedSceneCollection> OnSceneCollectionLoaded;
         
@@ -46,6 +47,7 @@ namespace BazzaGibbs.GameSceneManagement
 
             await Task.WhenAll(handles);
         }
+        
     }
 
     public class LoadedSceneCollection {
