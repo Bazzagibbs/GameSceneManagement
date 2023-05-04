@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Threading.Tasks;
+using UnityEngine;
 
 namespace BazzaGibbs.GameSceneManagement {
     
@@ -8,15 +9,18 @@ namespace BazzaGibbs.GameSceneManagement {
     [CreateAssetMenu(menuName = "Game Scene Management/Game Scene Manager Hook", fileName = "Game Scene Manager Hook", order = 100)]
     public class GameSceneManagerHook : ScriptableObject{
         public static void SetLevel(GameLevel level) {
-            GameSceneManager.SetLevel(level);
+            // Task t = GameSceneManager.SetLevelAsync(level);
+            // t.Start();
+            // t.Wait();
+            _ = GameSceneManager.SetLevelAsync(level);
         }
 
         public static void LoadAuxScene(GameAuxiliaryScene scene) {
-            GameSceneManager.LoadAuxScene(scene);
+            GameSceneManager.LoadAuxSceneAsync(scene);
         }
 
         public static void UnloadAuxScene(GameAuxiliaryScene scene) {
-            GameSceneManager.UnloadAuxScene(scene);
+            GameSceneManager.UnloadAuxSceneAsync(scene);
         }
 
         public static void ToggleAuxScene(GameAuxiliaryScene scene) {
@@ -24,11 +28,11 @@ namespace BazzaGibbs.GameSceneManagement {
         }
 
         public static void LoadCoreScene(GameCoreScene scene) {
-            GameSceneManager.LoadCoreScene(scene);
+            GameSceneManager.LoadCoreSceneAsync(scene);
         }
 
         public static void UnloadCoreScene(GameCoreScene scene) {
-            GameSceneManager.UnloadCoreScene(scene);
+            GameSceneManager.UnloadCoreSceneAsync(scene);
         }
     }
 }

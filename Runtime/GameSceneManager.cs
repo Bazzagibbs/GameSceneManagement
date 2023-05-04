@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using log4net.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -44,69 +47,76 @@ namespace BazzaGibbs.GameSceneManagement
             }
 
             foreach (GameCoreScene coreScene in m_StartCoreScenes) {
-                LoadCoreScene(coreScene);
+                LoadCoreSceneAsync(coreScene);
             }
 
             if (m_StartLevel != null) {
-                SetLevel(m_StartLevel);
+                // Task t = SetLevelAsync(m_StartLevel);
+                // t.Start();
+                // t.Wait();
+                _ = SetLevelAsync(m_StartLevel);
             }
         }
 
-        public static void SetLevel(GameLevel level) {
+        public static async Task<LoadedSceneCollection> SetLevelAsync(GameLevel level) {
             // Set current active scene to entry point.
             if (SceneManager.GetActiveScene() != Instance.gameObject.scene) {
                 SceneManager.SetActiveScene(Instance.gameObject.scene);
             }
 
             // Unload aux scenes before changing level
+            Task[] unloadAuxTasks = new Task[Instance.auxiliaryScenes.Count];
+            int i = 0;
             foreach (GameAuxiliaryScene auxScene in Instance.auxiliaryScenes) {
-                auxScene.Unload();
+                unloadAuxTasks[i] = auxScene.UnloadAsync();
+                i++;
             }
+            await Task.WhenAll(unloadAuxTasks);
             Instance.auxiliaryScenes.Clear();
-
+            
+            // Unload previous level
             if (Instance.currentLevel != null) {
-                // todo: Await
-                Instance.currentLevel.Unload();
+                await Instance.currentLevel.UnloadAsync();
             }
-
+            
+            // Load current level
             Instance.currentLevel = level;
-            // todo: Await
-            level.Load();
+            return await level.LoadAsync();
             // Level will set itself active, we don't have a reference to the actual Scene object
-
         }
 
-        public static void LoadAuxScene(GameAuxiliaryScene auxScene) {
-            if (Instance.auxiliaryScenes.Contains(auxScene)) return;
+
+        public static Task<LoadedSceneCollection> LoadAuxSceneAsync(GameAuxiliaryScene auxScene) {
+            if (Instance.auxiliaryScenes.Contains(auxScene)) return null;
             Instance.auxiliaryScenes.Add(auxScene);
-            auxScene.Load();
+            return auxScene.LoadAsync();
         }
 
-        public static void UnloadAuxScene(GameAuxiliaryScene auxScene) {
+        public static async void UnloadAuxSceneAsync(GameAuxiliaryScene auxScene) {
             if(Instance.auxiliaryScenes.TryGetValue(auxScene, out GameAuxiliaryScene loadedAuxScene)) {
-                loadedAuxScene.Unload();
+                await loadedAuxScene.UnloadAsync();
                 Instance.auxiliaryScenes.Remove(loadedAuxScene);
             }
         }
 
         public static void ToggleAuxScene(GameAuxiliaryScene auxScene) {
             if (Instance.auxiliaryScenes.TryGetValue(auxScene, out GameAuxiliaryScene loadedAuxScene)) {
-                UnloadAuxScene(loadedAuxScene);
+                UnloadAuxSceneAsync(loadedAuxScene);
             }
             else {
-                LoadAuxScene(auxScene);
+                LoadAuxSceneAsync(auxScene);
             }
         }
 
-        public static void LoadCoreScene(GameCoreScene coreScene) {
-            if (Instance.coreScenes.Contains(coreScene)) return;
+        public static Task<LoadedSceneCollection> LoadCoreSceneAsync(GameCoreScene coreScene) {
+            if (Instance.coreScenes.Contains(coreScene)) return null;
             Instance.coreScenes.Add(coreScene);
-            coreScene.Load();
+            return coreScene.LoadAsync();
         }
 
-        public static void UnloadCoreScene(GameCoreScene coreScene) {
+        public static async void UnloadCoreSceneAsync(GameCoreScene coreScene) {
             if(Instance.coreScenes.TryGetValue(coreScene, out GameCoreScene loadedCoreScene)) {
-                loadedCoreScene.Unload();
+                await loadedCoreScene.UnloadAsync();
                 Instance.coreScenes.Remove(loadedCoreScene);
             }
         }

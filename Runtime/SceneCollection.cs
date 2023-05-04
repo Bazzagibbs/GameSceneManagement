@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
@@ -11,47 +12,43 @@ namespace BazzaGibbs.GameSceneManagement
     public class SceneCollection : ScriptableObject {
         // public AssetReference loadingScreenSceneRef;
         public List<AssetReference> sceneRefs;
-        public UnityEvent<SceneCollection> OnSceneCollectionLoaded;
+        public UnityEvent<LoadedSceneCollection> OnSceneCollectionLoaded;
         
         protected virtual bool setSelfActive => false; // Overridden by GameLevel
         
-        public virtual void Load() {
+        public virtual async Task<LoadedSceneCollection> LoadAsync() {
+            Task<SceneInstance>[] handles = new Task<SceneInstance>[sceneRefs.Count];
             
-            // TODO: Show loading Screen scene if requested
-            LoadInternal();
-            
-        }
-
-
-        private void LoadInternal() {
             for (int i = 0; i < sceneRefs.Count; i++) {
                 AssetReference assetRef = sceneRefs[i];
-                
-                AsyncOperationHandle<SceneInstance> task = assetRef.LoadSceneAsync(LoadSceneMode.Additive);
-                
-                // Set the first scene as the active scene if we're loading a Level
-                if (i == 0 && setSelfActive) {
-                    task.Completed += OnHandleCompleted;
-                }
-
-                task.WaitForCompletion();
+                handles[i] = assetRef.LoadSceneAsync(LoadSceneMode.Additive).Task;
             }
 
-            OnSceneCollectionLoaded?.Invoke(this);
-        }
-
-        private void OnHandleCompleted(AsyncOperationHandle<SceneInstance> obj) {
-            Scene resultScene = obj.Result.Scene;
-            if (SceneManager.GetActiveScene() == resultScene) return;
-            
-            SceneManager.SetActiveScene(obj.Result.Scene);
-        }
-
-        public virtual void Unload() {
-            
-            foreach (AssetReference assetRef in sceneRefs) {
-                assetRef.UnLoadScene();
+            SceneInstance[] instances = await Task.WhenAll(handles);
+            if (setSelfActive) {
+                SceneManager.SetActiveScene(instances[0].Scene);
             }
+            
+            LoadedSceneCollection loadedCollection = new();
+            loadedCollection.sceneInstances = instances;
+            
+            OnSceneCollectionLoaded?.Invoke(loadedCollection);
+            return loadedCollection;
         }
+
+        public virtual async Task UnloadAsync() {
+            Task<SceneInstance>[] handles = new Task<SceneInstance>[sceneRefs.Count];
+            // Unload scenes in reverse order in case of dependencies
+            for(int i = sceneRefs.Count - 1; i >= 0; i--) {
+                AssetReference assetRef = sceneRefs[i];
+                handles[i] = assetRef.UnLoadScene().Task;
+            }
+
+            await Task.WhenAll(handles);
+        }
+    }
+
+    public class LoadedSceneCollection {
+        public SceneInstance[] sceneInstances;
     }
 }
