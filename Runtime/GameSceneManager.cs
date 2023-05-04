@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using log4net.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 namespace BazzaGibbs.GameSceneManagement
 {
@@ -12,7 +13,7 @@ namespace BazzaGibbs.GameSceneManagement
         // Only use for checking singleton
         private static GameSceneManager s_Instance;
 
-        private static GameSceneManager Instance {
+        public static GameSceneManager Instance {
             get {
                 if (s_Instance == null) {
                     s_Instance = new GameObject().AddComponent<GameSceneManager>();
@@ -23,7 +24,7 @@ namespace BazzaGibbs.GameSceneManagement
             }
         }
 
-        [SerializeField] private GameLevel m_StartLevel;
+        public GameLevel offlineLevel;
         [SerializeField] private List<GameCoreScene> m_StartCoreScenes = new();
 
         // One and only one level can be loaded at a time.
@@ -50,11 +51,11 @@ namespace BazzaGibbs.GameSceneManagement
                 LoadCoreSceneAsync(coreScene);
             }
 
-            if (m_StartLevel != null) {
-                // Task t = SetLevelAsync(m_StartLevel);
+            if (offlineLevel != null) {
+                // Task t = SetLevelAsync(offlineLevel);
                 // t.Start();
                 // t.Wait();
-                _ = SetLevelAsync(m_StartLevel);
+                _ = SetLevelAsync(offlineLevel);
             }
         }
 
