@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
+using System;
 using UnityEngine;
 
 namespace BazzaGibbs.GameSceneManagement {
@@ -12,34 +13,44 @@ namespace BazzaGibbs.GameSceneManagement {
 #if UNITY_EDITOR
         public SceneAsset playModeScene;
 
-        [MenuItem("Tools/Game Scene Management/Play Mode Launch Settings")]
-        public static void FindPlayModeLaunchSettings() {
-            
+        [InitializeOnLoadMethod]
+        public static void SetupOnLoad() {
+            if (TryFindPlayModeLaunchSettings(out PlayModeLaunchSettings settings)) {
+                settings.SetPlayModeScene();
+            }
+        }
+
+        public static bool TryFindPlayModeLaunchSettings(out PlayModeLaunchSettings settings) {
             string[] results = AssetDatabase.FindAssets("t:PlayModeLaunchSettings");
-            PlayModeLaunchSettings instance;
         
             if (results.Length <= 0) {
-                instance = CreateInstance<PlayModeLaunchSettings>();
-                AssetDatabase.CreateAsset(instance, "Assets/Settings/PlayModeLaunchSettings.asset");
+                settings = null;
+                return false;
             } 
-            else {
-                if (results.Length > 1) {
-                    Debug.LogWarning("[Game Scene Manager] Multiple PlayModeLaunchSettings assets found. Please make sure there are no more than one.");
-                }
-
-                string path = AssetDatabase.GUIDToAssetPath(results[0]);
-                instance = AssetDatabase.LoadAssetAtPath<PlayModeLaunchSettings>(path);
-            }
             
-            Selection.activeObject = instance;
-            EditorGUIUtility.PingObject(instance);
+            if (results.Length > 1) {
+                Debug.LogWarning("[Game Scene Manager] Multiple PlayModeLaunchSettings assets found. Please make sure there are no more than one.");
+            }
+
+            string path = AssetDatabase.GUIDToAssetPath(results[0]);
+            settings = AssetDatabase.LoadAssetAtPath<PlayModeLaunchSettings>(path);
+            return true;
+        }
+        
+        [MenuItem("Tools/Game Scene Management/Play Mode Launch Settings")]
+        public static void FindOrCreatePlayModeLaunchSettings() {
+            if (TryFindPlayModeLaunchSettings(out PlayModeLaunchSettings settings)) {
+                Selection.activeObject = settings;
+                EditorGUIUtility.PingObject(settings);
+            }
+            else {
+                PlayModeLaunchSettings instance = CreateInstance<PlayModeLaunchSettings>();
+                AssetDatabase.CreateAsset(instance, "Assets/Settings/PlayModeLaunchSettings.asset");
+            }
         }
         
 #endif
-        private void Awake() {
-            SetPlayModeScene();
-        }
-        
+
         private void OnValidate() {
             SetPlayModeScene();
         }
@@ -52,6 +63,7 @@ namespace BazzaGibbs.GameSceneManagement {
             else {
                 EditorSceneManager.playModeStartScene = null;
             }
+            
 #endif
         }
     }
