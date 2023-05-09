@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace BazzaGibbs.GameSceneManagement
@@ -28,7 +30,7 @@ namespace BazzaGibbs.GameSceneManagement
         [Tooltip("First entry will be used as the offline scene")]
         public GameLevel[] registeredLevels;
         [SerializeField] private List<GameCoreScene> m_StartCoreScenes = new();
-
+        [SerializeField] private GameCoreScene loadingScene;
         // One and only one level can be loaded at a time.
         [NonSerialized] public GameLevel currentLevel;
         // Core scenes are not dependent on any level or aux scenes, and do not need to be unloaded when changing level.
@@ -36,7 +38,12 @@ namespace BazzaGibbs.GameSceneManagement
         // Auxiliary scenes can be dependent on a level or core scene. They are all unloaded when the level is changed.
         [NonSerialized] public HashSet<GameAuxiliaryScene> auxiliaryScenes = new();
 
+        private UnityEvent onLoadingSceneReady = new(); // loading screen -> GSM
+        [SerializeField] private UnityEvent onLevelLoaded = new(); // GSM -> loading screen + others
+
         private bool wasInstantiatedByProperty = false;
+
+        private const int loadingScreenTransitionTimeOut = 3000;
         
         private void Awake() {
             if (s_Instance != null && wasInstantiatedByProperty == false) {
@@ -59,10 +66,28 @@ namespace BazzaGibbs.GameSceneManagement
             }
         }
 
-        public static async Task<LoadedSceneCollection> SetLevelAsync(GameLevel level) {
+        public static async Task<LoadedSceneCollection> SetLevelAsync(GameLevel level, bool useLoadingScreen = false) {
             // Set current active scene to entry point.
             if (SceneManager.GetActiveScene() != Instance.gameObject.scene) {
                 SceneManager.SetActiveScene(Instance.gameObject.scene);
+            }
+
+            if (useLoadingScreen) {
+                using (SemaphoreSlim sph = new SemaphoreSlim(0, 1)) {
+                    await LoadCoreSceneAsync(Instance.loadingScene);
+
+                    // loading screen should be ready, but we need to wait for its callback to continue.
+                    void CallbackDelegate() => sph.Release();
+                    Instance.onLoadingSceneReady.AddListener(CallbackDelegate);
+                    Task callbackTask = sph.WaitAsync();
+
+                    if (await Task.WhenAny(callbackTask, Task.Delay(loadingScreenTransitionTimeOut)) != callbackTask) {
+                        Debug.LogError("Loading scene didn't callback after Fade In");
+                    }
+
+                    // loading screen has called back or timed out
+                    Instance.onLoadingSceneReady.RemoveListener(CallbackDelegate);
+                }
             }
 
             // Unload aux scenes before changing level
@@ -72,18 +97,22 @@ namespace BazzaGibbs.GameSceneManagement
                 unloadAuxTasks[i] = auxScene.UnloadAsync();
                 i++;
             }
+
             await Task.WhenAll(unloadAuxTasks);
             Instance.auxiliaryScenes.Clear();
-            
+
             // Unload previous level
             if (Instance.currentLevel != null) {
                 await Instance.currentLevel.UnloadAsync();
             }
-            
+
             // Load current level
             Instance.currentLevel = level;
-            return await level.LoadAsync();
             // Level will set itself active, we don't have a reference to the actual Scene object
+            LoadedSceneCollection result = await level.LoadAsync();
+            // Loading screen will unload itself if it's subscribed to the onLevelLoaded event
+            Instance.onLevelLoaded?.Invoke();
+            return result;
         }
 
 
@@ -122,5 +151,8 @@ namespace BazzaGibbs.GameSceneManagement
             }
         }
 
+        public void LoadSceneReady() {
+            onLoadingSceneReady?.Invoke();
+        }
     }
 }
