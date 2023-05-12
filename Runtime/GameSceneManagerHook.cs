@@ -16,7 +16,7 @@ namespace BazzaGibbs.GameSceneManagement {
         }
 
         public static void LoadAuxScene(GameAuxiliaryScene scene) {
-            GameSceneManager.LoadAuxSceneAsync(scene);
+            _ = GameSceneManager.LoadAuxSceneAsync(scene);
         }
 
         public static void UnloadAuxScene(GameAuxiliaryScene scene) {
@@ -27,8 +27,8 @@ namespace BazzaGibbs.GameSceneManagement {
             GameSceneManager.ToggleAuxScene(scene);
         }
 
-        public static void LoadCoreScene(GameCoreScene scene) {
-            GameSceneManager.LoadCoreSceneAsync(scene);
+        public static void LoadCoreScene(GameCoreScene scene) { 
+            _ = GameSceneManager.LoadCoreSceneAsync(scene);
         }
 
         public static void UnloadCoreScene(GameCoreScene scene) {

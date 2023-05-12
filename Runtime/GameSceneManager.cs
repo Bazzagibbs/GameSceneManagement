@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 namespace BazzaGibbs.GameSceneManagement
 {
@@ -30,20 +30,19 @@ namespace BazzaGibbs.GameSceneManagement
         [Tooltip("First entry will be used as the offline scene")]
         public GameLevel[] registeredLevels;
         [SerializeField] private List<GameCoreScene> m_StartCoreScenes = new();
-        [SerializeField] private GameCoreScene loadingScene;
+        [SerializeField] private GameCoreScene m_LoadingScene;
+        private GameCoreScene m_CurrentLoadingScene;
+        private IGameLoadingScreen m_LoadingScreenObj;
+        
         // One and only one level can be loaded at a time.
-        [NonSerialized] public GameLevel currentLevel;
+        [NonSerialized] public (GameLevel, LoadedSceneCollection) currentLevel;
         // Core scenes are not dependent on any level or aux scenes, and do not need to be unloaded when changing level.
-        [NonSerialized] public HashSet<GameCoreScene> coreScenes = new();
+        [NonSerialized] public Dictionary<GameCoreScene, LoadedSceneCollection> coreScenes = new();
         // Auxiliary scenes can be dependent on a level or core scene. They are all unloaded when the level is changed.
-        [NonSerialized] public HashSet<GameAuxiliaryScene> auxiliaryScenes = new();
-
-        private UnityEvent onLoadingSceneReady = new(); // loading screen -> GSM
-        [SerializeField] private UnityEvent onLevelLoaded = new(); // GSM -> loading screen + others
+        [NonSerialized] public Dictionary<GameAuxiliaryScene, LoadedSceneCollection> auxiliaryScenes = new();
 
         private bool wasInstantiatedByProperty = false;
 
-        private const int loadingScreenTransitionTimeOut = 3000;
         
         private void Awake() {
             if (s_Instance != null && wasInstantiatedByProperty == false) {
@@ -57,7 +56,7 @@ namespace BazzaGibbs.GameSceneManagement
             }
 
             foreach (GameCoreScene coreScene in m_StartCoreScenes) {
-                LoadCoreSceneAsync(coreScene);
+                _ = LoadCoreSceneAsync(coreScene);
             }
 
 
@@ -73,27 +72,13 @@ namespace BazzaGibbs.GameSceneManagement
             }
 
             if (useLoadingScreen) {
-                using (SemaphoreSlim sph = new SemaphoreSlim(0, 1)) {
-                    await LoadCoreSceneAsync(Instance.loadingScene);
-
-                    // loading screen should be ready, but we need to wait for its callback to continue.
-                    void CallbackDelegate() => sph.Release();
-                    Instance.onLoadingSceneReady.AddListener(CallbackDelegate);
-                    Task callbackTask = sph.WaitAsync();
-
-                    if (await Task.WhenAny(callbackTask, Task.Delay(loadingScreenTransitionTimeOut)) != callbackTask) {
-                        Debug.LogError("Loading scene didn't callback after Fade In");
-                    }
-
-                    // loading screen has called back or timed out
-                    Instance.onLoadingSceneReady.RemoveListener(CallbackDelegate);
-                }
+                await BeginLoadingScreen();
             }
 
             // Unload aux scenes before changing level
             Task[] unloadAuxTasks = new Task[Instance.auxiliaryScenes.Count];
             int i = 0;
-            foreach (GameAuxiliaryScene auxScene in Instance.auxiliaryScenes) {
+            foreach (GameAuxiliaryScene auxScene in Instance.auxiliaryScenes.Keys) {
                 unloadAuxTasks[i] = auxScene.UnloadAsync();
                 i++;
             }
@@ -102,57 +87,95 @@ namespace BazzaGibbs.GameSceneManagement
             Instance.auxiliaryScenes.Clear();
 
             // Unload previous level
-            if (Instance.currentLevel != null) {
-                await Instance.currentLevel.UnloadAsync();
+            if (Instance.currentLevel.Item1 != null) {
+                Instance.currentLevel.Item2 = null;
+                await Instance.currentLevel.Item1.UnloadAsync();
             }
 
             // Load current level
-            Instance.currentLevel = level;
+            Instance.currentLevel = (level, await level.LoadAsync());
             // Level will set itself active, we don't have a reference to the actual Scene object
-            LoadedSceneCollection result = await level.LoadAsync();
             // Loading screen will unload itself if it's subscribed to the onLevelLoaded event
-            Instance.onLevelLoaded?.Invoke();
+            if (useLoadingScreen) {
+                _ = EndLoadingScreen();
+            }
+            return Instance.currentLevel.Item2;
+        }
+
+
+        public static async Task<LoadedSceneCollection> LoadAuxSceneAsync(GameAuxiliaryScene auxScene) {
+            if (Instance.auxiliaryScenes.TryGetValue(auxScene, out LoadedSceneCollection loadedScenes)) {
+                return loadedScenes;
+            }
+
+            LoadedSceneCollection result = await auxScene.LoadAsync();
+            Instance.auxiliaryScenes[auxScene] = result;
             return result;
         }
 
-
-        public static Task<LoadedSceneCollection> LoadAuxSceneAsync(GameAuxiliaryScene auxScene) {
-            if (Instance.auxiliaryScenes.Contains(auxScene)) return null;
-            Instance.auxiliaryScenes.Add(auxScene);
-            return auxScene.LoadAsync();
-        }
-
         public static async void UnloadAuxSceneAsync(GameAuxiliaryScene auxScene) {
-            if(Instance.auxiliaryScenes.TryGetValue(auxScene, out GameAuxiliaryScene loadedAuxScene)) {
-                await loadedAuxScene.UnloadAsync();
-                Instance.auxiliaryScenes.Remove(loadedAuxScene);
+            if(Instance.auxiliaryScenes.ContainsKey(auxScene)) {
+                await auxScene.UnloadAsync();
+                Instance.auxiliaryScenes.Remove(auxScene);
             }
         }
 
         public static void ToggleAuxScene(GameAuxiliaryScene auxScene) {
-            if (Instance.auxiliaryScenes.TryGetValue(auxScene, out GameAuxiliaryScene loadedAuxScene)) {
-                UnloadAuxSceneAsync(loadedAuxScene);
+            if (Instance.auxiliaryScenes.ContainsKey(auxScene)) {
+                UnloadAuxSceneAsync(auxScene);
             }
-            else {
-                LoadAuxSceneAsync(auxScene);
+            else { 
+                _ = LoadAuxSceneAsync(auxScene);
             }
         }
 
-        public static Task<LoadedSceneCollection> LoadCoreSceneAsync(GameCoreScene coreScene) {
-            if (Instance.coreScenes.Contains(coreScene)) return null;
-            Instance.coreScenes.Add(coreScene);
-            return coreScene.LoadAsync();
+        public static async Task<LoadedSceneCollection> LoadCoreSceneAsync(GameCoreScene coreScene) {
+            if (Instance.coreScenes.TryGetValue(coreScene, out LoadedSceneCollection loadedScenes)) {
+                return loadedScenes;
+            }
+
+            LoadedSceneCollection result = await coreScene.LoadAsync();
+            Instance.coreScenes[coreScene] = result;
+            return result;
         }
 
         public static async void UnloadCoreSceneAsync(GameCoreScene coreScene) {
-            if(Instance.coreScenes.TryGetValue(coreScene, out GameCoreScene loadedCoreScene)) {
-                await loadedCoreScene.UnloadAsync();
-                Instance.coreScenes.Remove(loadedCoreScene);
+            if(Instance.coreScenes.ContainsKey(coreScene)) {
+                await coreScene.UnloadAsync();
+                Instance.coreScenes.Remove(coreScene);
             }
         }
 
-        public void LoadingScreenReady() {
-            onLoadingSceneReady?.Invoke();
+        public static async Task BeginLoadingScreen() {
+            LoadedSceneCollection loadingScene =  await LoadCoreSceneAsync(Instance.m_LoadingScene);
+            Instance.m_LoadingScreenObj = null;
+            foreach (SceneInstance si in loadingScene.sceneInstances) {
+                bool shouldBreak = false;
+                foreach (GameObject go in si.Scene.GetRootGameObjects()) {
+                    Instance.m_LoadingScreenObj = go.GetComponentInChildren<IGameLoadingScreen>();
+                    if (Instance.m_LoadingScreenObj != null) {
+                        shouldBreak = true;
+                        break;
+                    }
+                }
+
+                if (shouldBreak) break;
+            }
+            
+            if (Instance.m_LoadingScreenObj != null) {
+                await Instance.m_LoadingScreenObj.LoadingScreenBegin();
+                return;
+            }
+            
+            Debug.LogError("Loading screen was requested, but no IGameLoadingScreen object was found.");
         }
+        
+        public static async Task EndLoadingScreen() {
+            if (Instance.m_LoadingScreenObj != null) {
+                await Instance.m_LoadingScreenObj.LoadingScreenEnd();
+                UnloadCoreSceneAsync(Instance.m_LoadingScene);
+            }
+        }
+
     }
 }
