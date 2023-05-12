@@ -151,7 +151,7 @@ namespace BazzaGibbs.GameSceneManagement
             }
         }
 
-        public void LoadSceneReady() {
+        public void LoadingScreenReady() {
             onLoadingSceneReady?.Invoke();
         }
     }
