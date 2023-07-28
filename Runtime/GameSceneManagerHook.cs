@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Fusion;
 using UnityEngine;
 
 namespace BazzaGibbs.GameSceneManagement {
@@ -13,6 +14,10 @@ namespace BazzaGibbs.GameSceneManagement {
             // t.Start();
             // t.Wait();
             _ = GameSceneManager.SetLevelAsync(level);
+        }
+
+        public static void SetLevelWithLoadScreen(GameLevel level) {
+            _ = GameSceneManager.SetLevelAsync(level, true);
         }
 
         public static void LoadAuxScene(GameAuxiliaryScene scene) {
